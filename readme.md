@@ -29,4 +29,9 @@
 ## Размещение файлов
 
 - `readme.md` – описание задания.
-- `workspace.dsl` – модель архитектуры в Structurizr DSL.
+- `workspace.dsl` – модель архитектуры в Structurizr DSL для первой лабы
+- `./Lab2_REST_with_in_memory` - вторая лаба
+- `Lab3_REST_with_postgresql` - третья лаба
+- `./Lab4_REST_postgresql_mongo` - третья лаба
+- `./Lab5_REST_postgresql_mongo_redis` - четвертая лаба
+- `./Lab6_REST_with_in_memory` - пятая лаба

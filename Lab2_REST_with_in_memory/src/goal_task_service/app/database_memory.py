@@ -1,0 +1,2 @@
+TASK_LIST = []
+GOAL_LIST = []

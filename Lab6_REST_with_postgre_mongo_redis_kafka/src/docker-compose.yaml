@@ -1,0 +1,162 @@
+services:
+
+    # goal-task-service
+    goal_task_service:
+        build: 
+            context: ./goal_task_service
+        ports:
+            - '8001:8001'
+        depends_on:
+            - goal_task_db
+            - task_files_db
+            - user_service
+            - kafka
+        environment:
+            - DATABASE_NAME=goal_task_service_db
+            - DB_USER=root
+            - DB_PASS=toor
+            - CONTAINER_NAME=goal_task_db
+            - PORT=5432
+            - MONGO_HOST=task_files_db
+            - MONGO_PORT=27017
+            - MONGO_USER=admin
+            - MONGO_PASSWORD=password
+            - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+        networks:
+            - our_network
+        restart: unless-stopped
+
+    # kafka consumer service
+    task_consumer_service:
+        build:
+            context: ./consumer_service
+        ports:
+            - '8002:8002'
+        depends_on:
+            - kafka
+            - goal_task_db
+        environment:
+            - DATABASE_NAME=goal_task_service_db
+            - DB_USER=root
+            - DB_PASS=toor
+            - CONTAINER_NAME=goal_task_db
+            - PORT=5432
+            - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+            - KAFKA_GROUP_ID=task_consumer_group
+        networks:
+            - our_network
+        restart: unless-stopped
+
+    # user_service
+    user_service:
+        build:
+            context: ./user_service
+        ports:
+            - '8000:8000'
+        depends_on:
+            - user_db
+            - cash_db
+        environment:
+            - DATABASE_NAME=user_service_db
+            - DB_USER=root
+            - DB_PASS=toor
+            - CONTAINER_NAME=user_db
+            - PORT=5432
+        networks:
+            - our_network
+        restart: unless-stopped
+
+    # postgre db for user-service
+    user_db:
+        image: postgres:14-alpine
+        environment:
+            - POSTGRES_PASSWORD=toor
+            - POSTGRES_USER=root
+            - POSTGRES_DB=user_service_db
+        volumes:
+            - user_db_data:/var/lib/postgresql/data
+        ports:
+            - "5433:5432"
+        networks:
+            - our_network
+        restart: unless-stopped
+
+
+    # postgre db for goal-task-service
+    goal_task_db:
+        image: postgres:14-alpine
+        environment:
+            - POSTGRES_PASSWORD=toor
+            - POSTGRES_USER=root
+            - POSTGRES_DB=goal_task_service_db
+        volumes:
+            - goal_task_db_data:/var/lib/postgresql/data
+        ports:
+            - "5432:5432"
+        networks:
+            - our_network
+        restart: unless-stopped
+
+    # Mongo db
+    task_files_db:
+        image: mongo:latest
+        ports:
+            - "27017:27017"
+        volumes:
+            - mongodb_data:/data/db
+        environment:
+            - MONGO_INITDB_ROOT_USERNAME=admin
+            - MONGO_INITDB_ROOT_PASSWORD=password
+        restart: unless-stopped
+        networks:
+            - our_network
+
+    # Redis
+    cash_db:
+        image: redis:latest
+        ports:
+            - "6379:6379"
+        volumes:
+            - ./redis_data:/data
+        restart: unless-stopped
+        networks:
+            - our_network
+
+    # Kafka
+    zookeeper:
+        image: confluentinc/cp-zookeeper:latest
+        ports:
+            - "2181:2181"
+        environment:
+            - ZOOKEEPER_CLIENT_PORT=2181
+            - ZOOKEEPER_TICK_TIME=2000
+        networks:
+            - our_network
+        restart: unless-stopped
+
+    kafka:
+        image: confluentinc/cp-kafka:latest
+        ports:
+            - "9092:9092"
+        depends_on:
+            - zookeeper
+        environment:
+            - KAFKA_BROKER_ID=1
+            - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+            - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+            - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+            - KAFKA_AUTO_CREATE_TOPICS_ENABLE=true
+        networks:
+            - our_network
+        restart: unless-stopped
+
+networks:
+    our_network:
+        driver: bridge
+
+volumes:
+    user_db_data:
+    goal_task_db_data:
+    mongodb_data:
+    redis_data:
+        

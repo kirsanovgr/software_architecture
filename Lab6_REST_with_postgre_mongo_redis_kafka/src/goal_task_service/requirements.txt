@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+sqlalchemy
+psycopg2-binary
+python-multipart
+pymongo
+pyjwt
+python-jose[cryptography]
+confluent-kafka

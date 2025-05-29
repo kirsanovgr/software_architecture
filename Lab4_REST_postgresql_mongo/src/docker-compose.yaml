@@ -1,0 +1,98 @@
+services:
+
+    # goal-task-service
+    goal_task_service:
+        build: 
+            context: ./goal_task_service
+        ports:
+            - '8001:8001'
+        depends_on:
+            - goal_task_db
+            - task_files_db
+            - user_service
+        environment:
+            - DATABASE_NAME=goal_task_service_db
+            - DB_USER=root
+            - DB_PASS=toor
+            - CONTAINER_NAME=goal_task_db
+            - PORT=5432
+            - MONGO_HOST=task_files_db
+            - MONGO_PORT=27017
+            - MONGO_USER=admin
+            - MONGO_PASSWORD=password
+        networks:
+            - our_network
+        restart: unless-stopped
+
+    # user_service
+    user_service:
+        build:
+            context: ./user_service
+        ports:
+            - '8000:8000'
+        depends_on:
+            - user_db
+        environment:
+            - DATABASE_NAME=user_service_db
+            - DB_USER=root
+            - DB_PASS=toor
+            - CONTAINER_NAME=user_db
+            - PORT=5432
+        networks:
+            - our_network
+        restart: unless-stopped
+
+    # postgre db for user-service
+    user_db:
+        image: postgres:14-alpine
+        environment:
+            - POSTGRES_PASSWORD=toor
+            - POSTGRES_USER=root
+            - POSTGRES_DB=user_service_db
+        volumes:
+            - user_db_data:/var/lib/postgresql/data
+        ports:
+            - "5433:5432"
+        networks:
+            - our_network
+        restart: unless-stopped
+
+
+    # postgre db for goal-task-service
+    goal_task_db:
+        image: postgres:14-alpine
+        environment:
+            - POSTGRES_PASSWORD=toor
+            - POSTGRES_USER=root
+            - POSTGRES_DB=goal_task_service_db
+        volumes:
+            - goal_task_db_data:/var/lib/postgresql/data
+        ports:
+            - "5432:5432"
+        networks:
+            - our_network
+        restart: unless-stopped
+
+    task_files_db:
+        image: mongo:latest
+        ports:
+            - "27017:27017"
+        volumes:
+            - mongodb_data:/data/db
+        environment:
+            - MONGO_INITDB_ROOT_USERNAME=admin
+            - MONGO_INITDB_ROOT_PASSWORD=password
+        restart: unless-stopped
+        networks:
+            - our_network
+
+networks:
+    our_network:
+        driver: bridge
+
+volumes:
+    user_db_data:
+    goal_task_db_data:
+    mongodb_data:
+        
+        
